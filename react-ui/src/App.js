@@ -4,7 +4,7 @@ import apikey from './api/apikey.js';
 import './App.css';
 
 // base address for API calls
-const base = "https://api.guildwars2.com/";
+const apiBase = "https://api.guildwars2.com/v2";
 
 class App extends Component {
     render() {
@@ -33,14 +33,20 @@ class Dailies extends Component {
     }
 
     componentDidMount() {
-        var myInit = {
+        GetAccount()
+            .then((data) => {
+                console.log(data);
+            })
+            .catch((error) => {
+                console.error(error);
+            })
+
+        fetch(apiBase + "/achievements/daily", {
             method: 'GET',
             headers: new Headers({
                 'Accept': 'application/json'
             })
-        }
-
-        fetch("https://api.guildwars2.com/v2/achievements/daily", myInit).then(function (response) {
+        }).then(function (response) {
             if (response.ok) {
                 return response.json();
             }
@@ -54,14 +60,14 @@ class Dailies extends Component {
             ids.push(data.pvp.map((a) => a.id));
             ids.push(data.wvw.map((a) => a.id));
             ids.push(data.fractals.map((a) => a.id));
-            // ids.push(data.specials.map((a) => a.id));
+            if (data.special.length) { ids.push(data.special.map((a) => a.id)); }
+            
 
             GetAchievementData(ids)
                 .then(function (achievementData) {
                     // merge achievement data into data returned from dailies endpoint
-
                     const achievementMerge = (daily) => {
-                        let achievement = achievementData.find((a) => { return a.id == daily.id });
+                        let achievement = achievementData.find((a) => { return a.id === daily.id });
                         daily.achievement = achievement;
                     }
 
@@ -69,8 +75,7 @@ class Dailies extends Component {
                     data.pvp.forEach(achievementMerge);
                     data.wvw.forEach(achievementMerge);
                     data.fractals.forEach(achievementMerge);
-
-                    console.log(data);
+                    data.special.forEach(achievementMerge);
 
                     this.setState({
                         dailies: data
@@ -82,10 +87,6 @@ class Dailies extends Component {
             // Error handling code goes here
             console.error(error)
         })
-    }
-
-    componentWillUnmount() {
-
     }
 
     render() {
@@ -121,6 +122,13 @@ class Dailies extends Component {
                     </div>
                 )}
 
+                {this.state.dailies !== null && this.state.dailies.special.length && (
+                    <div className="daily-achievements-group">
+                        <h2>Special Dailies</h2>
+                        <DailyDisplay dailies={this.state.dailies.special} />
+                    </div>
+                )}
+
             </div>
         )
     }
@@ -152,20 +160,13 @@ const GetAchievementData = (ids) => {
     ids = ids.join(",");
 
     return new Promise((resolve, reject) => {
-        fetch("https://api.guildwars2.com/v2/achievements?ids=" + ids, {
+        fetch(apiBase + "/achievements?ids=" + ids, {
             method: 'GET',
             headers: new Headers({
                 'Accept': 'application/json'
             })
         })
-            .then(function (response) {
-                if (response.ok) {
-                    return response.json();
-                }
-                else {
-                    throw new Error('Network response was not ok.');
-                }
-            })
+            .then(jsonFetchResponse)
             .then(function (data) {
                 resolve(data);
             })
@@ -175,5 +176,38 @@ const GetAchievementData = (ids) => {
             })
     });
 }
+
+const GetAccount = () => {
+    let authKey = "Bearer " + apikey;
+    console.log(authKey);
+
+    return new Promise((resolve, reject) => {
+        fetch(apiBase + "/account", {
+            method: "POST",
+            headers: new Headers({
+                "Accept": "application/json",
+                "Authorization": authKey
+            })
+        })
+            .then(jsonFetchResponse)
+            .then((data) => {
+                resolve(data);
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+}
+
+const jsonFetchResponse = function (response) {
+    // debugger;
+    if (response.ok) {
+        return response.json();
+    }
+    else {
+        // throw new Error('Network response was not ok.');
+        throw response;
+    }
+};
 
 export default App;
