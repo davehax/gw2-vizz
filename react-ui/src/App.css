@@ -1,28 +1,63 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
 .App {
-  text-align: center;
+    font-family: "Lato", sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    color: #282828;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Monsterrat", sans-serif;
+    color: #000;
 }
 
 .App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+    height: 80px;
 }
 
 .App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
+    height: 150px;
+    padding: 20px;
 }
 
 .App-title {
-  font-size: 1.5em;
+    font-size: 1.5em;
 }
 
 .App-intro {
-  font-size: large;
+    font-size: large;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.App-body {
+    padding: 20px;
+}
+
+/* Daily Achievements */
+.daily-achievements-group {
+    vertical-align: top;
+    display: inline-block;
+    width: 20%;
+    padding: 10px 2%;
+}
+
+.daily-achievements-group h2 {
+    margin: 0 0 20px 0;
+}
+
+.daily-name {
+    margin: 0 0 5px 0;
+}
+
+.daily-meta {
+    margin: 0;
+    color: #777;
+    font-style: italic;
+}
+
+.daily-requirement {
+    margin: 20px 0;
 }
