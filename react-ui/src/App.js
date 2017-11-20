@@ -3,40 +3,45 @@ import logo from './img/gw2-logo.jpg';
 import apikey from './api/apikey.js';
 import './App.css';
 
-// base address for API calls
-const apiBase = "https://api.guildwars2.com/v2";
+import apiBase from './api/api.js';
+import jsonFetchResponse from './Util.js';
+
+import Dailies from './Dailies.js';
+import Account from './Account.js';
+import Characters from './Characters.js';
+
+
 
 class App extends Component {
-    render() {
-        return (
-            <div className="App">
-                <header className="App-header">
-                    <img src={logo} className="App-logo" alt="Guild Wars 2" />
-                    <Heading accountName={"Test"} />
-                </header>
-                <div className="App-body">
-                    <Dailies />
-                </div>
-            </div>
-        );
-    }
-}
-
-// Loads data for Daily Achievements
-class Dailies extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
+            account: null,
+            characters: null,
             dailies: null
         }
     }
 
     componentDidMount() {
         GetAccount()
-            .then((data) => {
+            .then(function (data) {
                 console.log(data);
+                this.setState({
+                    account: data
+                })
+            }.bind(this))
+            .catch((error) => {
+                console.error(error);
             })
+
+        GetCharacters()
+            .then(function (data) {
+                console.log(data);
+                this.setState({
+                    characters: data
+                })
+            }.bind(this))
             .catch((error) => {
                 console.error(error);
             })
@@ -46,14 +51,7 @@ class Dailies extends Component {
             headers: new Headers({
                 'Accept': 'application/json'
             })
-        }).then(function (response) {
-            if (response.ok) {
-                return response.json();
-            }
-            else {
-                throw new Error('Network response was not ok.');
-            }
-        }).then(function (data) {
+        }).then(jsonFetchResponse).then(function (data) {
 
             let ids = [];
             ids.push(data.pve.map((a) => a.id));
@@ -61,7 +59,6 @@ class Dailies extends Component {
             ids.push(data.wvw.map((a) => a.id));
             ids.push(data.fractals.map((a) => a.id));
             if (data.special.length) { ids.push(data.special.map((a) => a.id)); }
-            
 
             GetAchievementData(ids)
                 .then(function (achievementData) {
@@ -91,64 +88,23 @@ class Dailies extends Component {
 
     render() {
         return (
-            <div>
-                {this.state.dailies === null && <div>Loading data</div>}
-                {this.state.dailies !== null && this.state.dailies.pve.length && (
-                    <div className="daily-achievements-group">
-                        <h2>PvE Dailies</h2>
-                        <DailyDisplay dailies={this.state.dailies.pve} />
-                    </div>
-                )}
-
-                {this.state.dailies !== null && this.state.dailies.pvp.length && (
-                    <div className="daily-achievements-group">
-                        <h2>PvP Dailies</h2>
-                        <DailyDisplay dailies={this.state.dailies.pvp} />
-                    </div>
-                )}
-
-            
-                {this.state.dailies !== null && this.state.dailies.wvw.length && (
-                    <div className="daily-achievements-group">
-                        <h2>WvW Dailies</h2>
-                        <DailyDisplay dailies={this.state.dailies.wvw} />
-                    </div>
-                )}
-
-                {this.state.dailies !== null && this.state.dailies.fractals.length && (
-                    <div className="daily-achievements-group">
-                        <h2>Fractal Dailies</h2>
-                        <DailyDisplay dailies={this.state.dailies.fractals} />
-                    </div>
-                )}
-
-                {this.state.dailies !== null && this.state.dailies.special.length && (
-                    <div className="daily-achievements-group">
-                        <h2>Special Dailies</h2>
-                        <DailyDisplay dailies={this.state.dailies.special} />
-                    </div>
-                )}
-
+            <div className="App">
+                <header className="App-header">
+                    <img src={logo} className="App-logo" alt="Guild Wars 2" />
+                </header>
+                <div className="App-body">
+                    {this.state.account !== null && <Account account={this.state.account} /> }
+                    {this.state.characters !== null && <Characters characters={this.state.characters} />}
+                    {this.state.dailies !== null && <Dailies dailies={this.state.dailies} /> }
+                </div>
             </div>
-        )
+        );
     }
 }
 
-const DailyDisplay = ({ dailies }) => {
-    return (
-        <div className="daily-achievements">
-            {dailies.map((daily, idx) => {
-                return (
-                    <div className="daily-achievement" key={idx}>
-                        <h3 className="daily-name">{daily.achievement.name}</h3>
-                        {daily.achievement.description && <p className="daily-meta">{daily.achievement.description}</p>}
-                        <p className="daily-requirement">{daily.achievement.requirement}</p>
-                    </div>
-                )
-            })}
-        </div>
-    )
-}
+
+
+
 
 const Heading = ({ accountName }) => {
     return (
@@ -178,20 +134,31 @@ const GetAchievementData = (ids) => {
 }
 
 const GetAccount = () => {
-    let authKey = "Bearer " + apikey;
-    console.log(authKey);
+    let authKey = "?access_token=" + apikey;
 
     return new Promise((resolve, reject) => {
-        fetch(apiBase + "/account", {
-            method: "POST",
+        fetch(apiBase + "/account" + authKey, {
+            method: "GET",
             headers: new Headers({
-                "Accept": "application/json",
-                "Authorization": authKey
+                "Accept": "application/json"
             })
         })
             .then(jsonFetchResponse)
             .then((data) => {
-                resolve(data);
+
+                fetch(apiBase + "/worlds?id=" + data.world, {
+                    method: "GET",
+                    headers: new Headers({
+                        "Accept": "application/json"
+                    })
+                })
+                    .then(jsonFetchResponse)
+                    .then((worldData) => {
+                        data.world = worldData.name;
+                        resolve(data);
+                    })
+
+                
             })
             .catch((error) => {
                 reject(error);
@@ -199,15 +166,56 @@ const GetAccount = () => {
     });
 }
 
-const jsonFetchResponse = function (response) {
-    // debugger;
-    if (response.ok) {
-        return response.json();
-    }
-    else {
-        // throw new Error('Network response was not ok.');
-        throw response;
-    }
-};
+const GetCharacters = () => {
+    let authKey = "?access_token=" + apikey;
+
+    // asynchronously launch two requests to the characters and titles endpoints.
+
+    let charactersPromise = new Promise((resolve, reject) => {
+        fetch(apiBase + "/characters" + authKey + "&page=0", {
+            method: "GET",
+            headers: new Headers({
+                "Accept": "application/json"
+            })
+        })
+            .then(jsonFetchResponse)
+            .then((data) => { resolve(data); })
+            .catch((error) => { reject(error); });
+    });
+
+    let titlesPromise = new Promise((resolve, reject) => {
+        fetch(apiBase + "/titles?ids=all", {
+            method: "GET",
+            headers: new Headers({
+                "Accept": "application/json"
+            })
+        })
+            .then(jsonFetchResponse)
+            .then((data) => { resolve(data); })
+            .catch((error) => { reject(error); });
+    })
+
+    // wrap the requests in Promise.all to further process the data returned.
+    return new Promise((resolve, reject) => {
+        Promise.all([charactersPromise, titlesPromise])
+            // Dark trickery below. Accepting "[ characters, titles ]" as parameters will 
+            // create two scoped variables called "characters" and "titles". The value of
+            // "characters" is the FIRST [0] index of the array passed in. The value of
+            // "titles" is the SECOND [1] index of the array passed in.
+            .then(([ characters, titles ]) => {
+                // replace the id of character.title with the name of the title
+                characters.forEach((character) => {
+                    let title = titles.find((t) => t.id === character.title);
+                    if (typeof(title) !== "undefined") {
+                        character.title = title.name;
+                    }
+                });
+
+                resolve(characters);
+            })
+            .catch((error) => { reject(error) });
+    })
+    
+}
 
 export default App;

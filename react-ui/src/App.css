@@ -61,3 +61,18 @@ h1, h2, h3, h4, h5, h6 {
 .daily-requirement {
     margin: 20px 0;
 }
+
+/* Character */
+.character-name {
+    vertical-align: top;
+    height: 32px;
+    line-height: 32px;
+}
+.character-name * {
+    vertical-align: top;
+}
+
+.character-title {
+    color: #888;
+    font-weight: normal;
+}
