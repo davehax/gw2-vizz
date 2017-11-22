@@ -1,39 +1,75 @@
 html, body {
     margin: 0;
     padding: 0;
+    background-color: #c70000;
+    background-image: url('./img/pattern-geometric-1.jpg?v=1.0');
+    background-position: center center;
+    background-repeat: repeat;
+    background-size: 333px 333px;
 }
 
 .App {
+    box-sizing: border-box;
     font-family: "Lato", sans-serif;
     font-size: 16px;
     line-height: 1.4;
     color: #282828;
+
+    overflow: auto;
+    height: 80vh;
+    margin: 10vh 100px;
+
+    background-color: #fff;
+
+    box-shadow: 20px 25px 0px rgba(0, 0, 0, 0.5);
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: "Monsterrat", sans-serif;
     color: #000;
+    margin: 0 0 0.5em 0;
 }
 
-.App-logo {
-    height: 80px;
+.App-body > div {
+    padding: 20px 30px;
+    border-top: 5px solid #990000;
+    border-bottom: 10px solid #c70000;
 }
 
-.App-header {
-    height: 150px;
-    padding: 20px;
+.App-body > div:first-child { border-top: none; }
+.App-body > div:last-child { border-bottom: none; }
+
+/* Account details */
+
+.account-title * { vertical-align: top; }
+.account-title {
+    font-size: 36px;
+    line-height: 72px;
+    margin: 0;
+    text-shadow: 6px 6px 1px rgba(0, 0, 0, 0.15);
 }
 
-.App-title {
-    font-size: 1.5em;
+.account-title .App-logo {
+    height: 72px;
 }
 
-.App-intro {
-    font-size: large;
+.account-title span {
+    display: inline-block;
+    margin-left: 15px;
 }
 
-.App-body {
-    padding: 20px;
+.account-meta {
+    list-style: none;
+    margin: 1.5em 0;
+    padding: 0;
+}
+
+.account-meta li > span {
+    display: inline-block;
+    width: 160px;
+    padding-right: 10px;
+    font-weight: bold;
+    text-align: right;
 }
 
 /* Daily Achievements */
@@ -48,12 +84,24 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0 0 20px 0;
 }
 
+.daily-achievement {
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+    cursor: pointer;
+    border-bottom: 1px solid #ccc;
+}
+
+.daily-achievement:last-child { border-bottom: none; }
+
+.daily-achievement[data-expanded="false"] .daily-details {
+    display: none;
+}
+
 .daily-name {
     margin: 0 0 5px 0;
 }
 
 .daily-meta {
-    margin: 0;
     color: #777;
     font-style: italic;
 }
@@ -63,6 +111,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Character */
+.character {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+}
+
+.character:last-child { border-bottom: none; }
+
 .character-name {
     vertical-align: top;
     height: 32px;
@@ -70,11 +126,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 .character-name * {
     vertical-align: top;
+    margin-bottom: 0.15em;
 }
 
 .character-title {
     color: #888;
     font-weight: normal;
+}
+
+.character-crafting {
+    margin: 0.125em 0;
 }
 
 .character-discipline {

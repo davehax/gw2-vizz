@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import logo from './img/gw2-logo.jpg';
 import apikey from './api/apikey.js';
 import './App.css';
 
@@ -62,13 +61,8 @@ class App extends Component {
     render() {
         return (
             <div className="App">
-                <header className="App-header">
-                    <img src={logo} className="App-logo" alt="Guild Wars 2" />
-                </header>
-                <div className="App-side">
-                    {this.state.account !== null && <Account account={this.state.account} /> }
-                </div>
                 <div className="App-body">
+                    {this.state.account !== null && <Account account={this.state.account} /> }
                     {this.state.characters !== null && <Characters characters={this.state.characters} />}
                     {this.state.dailies !== null && <Dailies dailies={this.state.dailies} /> }
                 </div>
@@ -95,6 +89,9 @@ const GetAccount = () => {
                 let promises = [];
                 // Get world data
                 promises.push(GetWorld(data.world));
+
+                // Get WvW rank data
+                promises.push(GetWvWRank(data.wvw_rank));
                 
                 // Get Guild(s) data                
                 data.guilds.forEach((guildId) => {
@@ -104,9 +101,11 @@ const GetAccount = () => {
                 Promise.all(promises)
                     .then((values) => {
                         let worldData = values[0]; // first element of the array
-                        let guildData = values.slice(1); // every element after the first
+                        let wvwData = values[1]; // second element of the array
+                        let guildData = values.slice(2); // every element after the second
 
                         data.world = worldData.name;
+                        data.wvw_rank = wvwData.title;
                         data.guilds = guildData;
 
                         resolve(data);
@@ -114,9 +113,6 @@ const GetAccount = () => {
                     .catch((error) => {
                         reject(error);
                     });
-
-
-                
                 
             })
             .catch((error) => {
@@ -125,6 +121,7 @@ const GetAccount = () => {
     });
 }
 
+// Get Daily Achievements
 const GetDailyAchievements = () => {
     return new Promise((resolve, reject) => {
         getJson(`${apiBase}/achievements/daily`)
@@ -171,6 +168,11 @@ const GetWorld = (id) => {
 // Get Guild data
 const GetGuild = (guildId) => {
     return getJson(`${apiBase}/guild/${guildId}`);
+}
+
+// Get WvW Rank Data
+const GetWvWRank = (id) => {
+    return getJson(`${apiBase}/wvw/ranks/${id}`);
 }
 
 // Get Characters data

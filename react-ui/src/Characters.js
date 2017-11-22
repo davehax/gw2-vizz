@@ -6,6 +6,7 @@ import moment from 'moment';
 const Characters = ({ characters }) => {
     return (
         <div className="characters">
+            <h2>Characters</h2>
             {characters.map((character, idx) => <Character key={idx} character={character} />)}
         </div>
     )
@@ -28,14 +29,14 @@ const Character = ({ character }) => {
     if (ageYears > 0) age += `${ageYears} years, `;
     if (ageMonths > 0) age += `${ageMonths} months, `;
     if (ageWeeks > 0) age += `${ageWeeks} weeks, `;
-    if (ageDays > 0) age += `${ageDays} days`;
+    if (ageDays > 0) age += `${ageDays % 7} days`;
 
     return (
         <div className="character">
             <h3 className="character-name">
                 <GW2Icon iconId={`icon_${character.profession.toLowerCase()}`} />
-                &nbsp;<span>{character.name}</span>
-                {typeof(character.title) !== "undefined" && ( <span className="character-title">&nbsp;{character.title}</span> )}
+                &nbsp;<span>{`${character.name} (${character.level})`}</span>
+                {typeof(character.title) !== "undefined" ? ( <span className="character-title">&nbsp;{character.title}</span> ) : null}
             </h3>
             <p className="character-crafting">
                 {character.crafting.length ? character.crafting.map((craft, idx) => <CraftingDiscipline craft={craft} key={idx} />) : null}
