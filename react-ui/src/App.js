@@ -4,7 +4,7 @@ import apikey from './api/apikey.js';
 import './App.css';
 
 import apiBase from './api/api.js';
-import jsonFetchResponse from './Util.js';
+import { getJson } from './Util.js';
 
 import Dailies from './Dailies.js';
 import Account from './Account.js';
@@ -24,9 +24,9 @@ class App extends Component {
     }
 
     componentDidMount() {
+        // Get Account data
         GetAccount()
             .then(function (data) {
-                console.log(data);
                 this.setState({
                     account: data
                 })
@@ -35,9 +35,9 @@ class App extends Component {
                 console.error(error);
             })
 
-        GetCharacters()
+        // Get Characters data
+        GetAllCharacters()
             .then(function (data) {
-                console.log(data);
                 this.setState({
                     characters: data
                 })
@@ -45,45 +45,18 @@ class App extends Component {
             .catch((error) => {
                 console.error(error);
             })
-
-        fetch(apiBase + "/achievements/daily", {
-            method: 'GET',
-            headers: new Headers({
-                'Accept': 'application/json'
+        
+        // Get Daily Achievements data
+        GetDailyAchievements()
+            .then(function (data) {
+                this.setState({
+                    dailies: data
+                });
+            }.bind(this))
+            .catch((error) => {
+                console.error(error);
             })
-        }).then(jsonFetchResponse).then(function (data) {
-
-            let ids = [];
-            ids.push(data.pve.map((a) => a.id));
-            ids.push(data.pvp.map((a) => a.id));
-            ids.push(data.wvw.map((a) => a.id));
-            ids.push(data.fractals.map((a) => a.id));
-            if (data.special.length) { ids.push(data.special.map((a) => a.id)); }
-
-            GetAchievementData(ids)
-                .then(function (achievementData) {
-                    // merge achievement data into data returned from dailies endpoint
-                    const achievementMerge = (daily) => {
-                        let achievement = achievementData.find((a) => { return a.id === daily.id });
-                        daily.achievement = achievement;
-                    }
-
-                    data.pve.forEach(achievementMerge);
-                    data.pvp.forEach(achievementMerge);
-                    data.wvw.forEach(achievementMerge);
-                    data.fractals.forEach(achievementMerge);
-                    data.special.forEach(achievementMerge);
-
-                    this.setState({
-                        dailies: data
-                    });
-                }.bind(this));
-
-
-        }.bind(this)).catch(function (error) {
-            // Error handling code goes here
-            console.error(error)
-        })
+        
     }
 
     render() {
@@ -92,8 +65,10 @@ class App extends Component {
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="Guild Wars 2" />
                 </header>
-                <div className="App-body">
+                <div className="App-side">
                     {this.state.account !== null && <Account account={this.state.account} /> }
+                </div>
+                <div className="App-body">
                     {this.state.characters !== null && <Characters characters={this.state.characters} />}
                     {this.state.dailies !== null && <Dailies dailies={this.state.dailies} /> }
                 </div>
@@ -102,62 +77,46 @@ class App extends Component {
     }
 }
 
-
-
-
-
-const Heading = ({ accountName }) => {
-    return (
-        <h1 className="App-title">{accountName}</h1>
-    )
-}
-
+// Get achievement data from an array of achievement ids
 const GetAchievementData = (ids) => {
     ids = ids.join(",");
-
-    return new Promise((resolve, reject) => {
-        fetch(apiBase + "/achievements?ids=" + ids, {
-            method: 'GET',
-            headers: new Headers({
-                'Accept': 'application/json'
-            })
-        })
-            .then(jsonFetchResponse)
-            .then(function (data) {
-                resolve(data);
-            })
-            .catch(function (error) {
-                // Error handling code goes here
-                reject(error);
-            })
-    });
+    return getJson(`${apiBase}/achievements?ids=${ids}`);
 }
 
+// Get Account Data. Includes expanded data for World and Guilds
 const GetAccount = () => {
     let authKey = "?access_token=" + apikey;
 
     return new Promise((resolve, reject) => {
-        fetch(apiBase + "/account" + authKey, {
-            method: "GET",
-            headers: new Headers({
-                "Accept": "application/json"
-            })
-        })
-            .then(jsonFetchResponse)
+
+        getJson(`${apiBase}/account${authKey}`)
             .then((data) => {
 
-                fetch(apiBase + "/worlds?id=" + data.world, {
-                    method: "GET",
-                    headers: new Headers({
-                        "Accept": "application/json"
-                    })
-                })
-                    .then(jsonFetchResponse)
-                    .then((worldData) => {
+                let promises = [];
+                // Get world data
+                promises.push(GetWorld(data.world));
+                
+                // Get Guild(s) data                
+                data.guilds.forEach((guildId) => {
+                    promises.push(GetGuild(guildId));
+                });
+
+                Promise.all(promises)
+                    .then((values) => {
+                        let worldData = values[0]; // first element of the array
+                        let guildData = values.slice(1); // every element after the first
+
                         data.world = worldData.name;
+                        data.guilds = guildData;
+
                         resolve(data);
                     })
+                    .catch((error) => {
+                        reject(error);
+                    });
 
+
+                
                 
             })
             .catch((error) => {
@@ -166,34 +125,61 @@ const GetAccount = () => {
     });
 }
 
-const GetCharacters = () => {
+const GetDailyAchievements = () => {
+    return new Promise((resolve, reject) => {
+        getJson(`${apiBase}/achievements/daily`)
+            .then((data) => {
+
+                let ids = [];
+                ids.push(data.pve.map((a) => a.id));
+                ids.push(data.pvp.map((a) => a.id));
+                ids.push(data.wvw.map((a) => a.id));
+                ids.push(data.fractals.map((a) => a.id));
+                // If there's a seasonal event on
+                if (data.special.length) { ids.push(data.special.map((a) => a.id)); }
+
+                // Take a list of achievement ids and get the achievement objects
+                GetAchievementData(ids)
+                    .then((achievementData) => {
+                        // merge achievement data into data returned from dailies endpoint
+                        const achievementMerge = (daily) => {
+                            let achievement = achievementData.find((a) => { return a.id === daily.id });
+                            daily.achievement = achievement;
+                        }
+
+                        data.pve.forEach(achievementMerge);
+                        data.pvp.forEach(achievementMerge);
+                        data.wvw.forEach(achievementMerge);
+                        data.fractals.forEach(achievementMerge);
+                        data.special.forEach(achievementMerge);
+
+                        resolve(data);
+                    });
+
+
+            }).catch(function (error) {
+                reject(error);
+            })
+    });
+}
+
+// Get World - data resolved is { id, name, population }
+const GetWorld = (id) => {
+    return getJson(`${apiBase}/worlds?id=${id}`);
+}
+
+// Get Guild data
+const GetGuild = (guildId) => {
+    return getJson(`${apiBase}/guild/${guildId}`);
+}
+
+// Get Characters data
+const GetAllCharacters = () => {
     let authKey = "?access_token=" + apikey;
 
     // asynchronously launch two requests to the characters and titles endpoints.
-
-    let charactersPromise = new Promise((resolve, reject) => {
-        fetch(apiBase + "/characters" + authKey + "&page=0", {
-            method: "GET",
-            headers: new Headers({
-                "Accept": "application/json"
-            })
-        })
-            .then(jsonFetchResponse)
-            .then((data) => { resolve(data); })
-            .catch((error) => { reject(error); });
-    });
-
-    let titlesPromise = new Promise((resolve, reject) => {
-        fetch(apiBase + "/titles?ids=all", {
-            method: "GET",
-            headers: new Headers({
-                "Accept": "application/json"
-            })
-        })
-            .then(jsonFetchResponse)
-            .then((data) => { resolve(data); })
-            .catch((error) => { reject(error); });
-    })
+    let charactersPromise = getJson(`${apiBase}/characters${authKey}&page=0`);
+    let titlesPromise = getJson(`${apiBase}/titles?ids=all`);
 
     // wrap the requests in Promise.all to further process the data returned.
     return new Promise((resolve, reject) => {

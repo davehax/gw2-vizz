@@ -58,7 +58,7 @@ class GW2Icon extends Component {
 
     render() {
         if (this.state.icon !== null) {
-            return <img className={"gw2-icon " + this.props.iconId} src={this.state.icon} />
+            return <img className={"gw2-icon " + this.props.iconId} src={this.state.icon} alt={this.props.iconId} />
         }
         else {
             return null;

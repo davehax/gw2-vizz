@@ -76,3 +76,18 @@ h1, h2, h3, h4, h5, h6 {
     color: #888;
     font-weight: normal;
 }
+
+.character-discipline {
+    line-height: 16px;
+    vertical-align: top;
+    margin: 0 10px;
+}
+
+.character-discipline[data-active="false"] { opacity: 0.5; }
+
+.character-discipline * { vertical-align: top; }
+
+.character-discipline .gw2-icon {
+    width: 16px;
+    height: 16px;
+}

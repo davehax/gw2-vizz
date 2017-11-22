@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 import GW2Icon from './GW2Icon.js';
 import moment from 'moment';
 
+// Render all characters passed in
 const Characters = ({ characters }) => {
     return (
         <div className="characters">
@@ -10,6 +11,7 @@ const Characters = ({ characters }) => {
     )
 }
 
+// Render a single characters details
 const Character = ({ character }) => {
     let playtimeHours = Math.floor(character.age / 60 / 60);
     let playtimeMinutes = Math.floor(character.age / 60) % 60;
@@ -28,25 +30,33 @@ const Character = ({ character }) => {
     if (ageWeeks > 0) age += `${ageWeeks} weeks, `;
     if (ageDays > 0) age += `${ageDays} days`;
 
-    // debugger;
-
     return (
         <div className="character">
             <h3 className="character-name">
-                <GW2Icon iconId={"icon_" + character.profession.toLowerCase()} />
+                <GW2Icon iconId={`icon_${character.profession.toLowerCase()}`} />
                 &nbsp;<span>{character.name}</span>
                 {typeof(character.title) !== "undefined" && ( <span className="character-title">&nbsp;{character.title}</span> )}
             </h3>
+            <p className="character-crafting">
+                {character.crafting.length ? character.crafting.map((craft, idx) => <CraftingDiscipline craft={craft} key={idx} />) : null}
+            </p>
             <ul className="character-meta">
                 <li>{`Level ${character.level} ${character.race} ${character.profession}`}</li>
                 <li>{`Playtime: ${playtimeHours}h ${playtimeMinutes}m`}</li>
                 <li>{`Character age: ${age} (Created ${characterCreated.format("D/M/YYYY")})`}</li>
                 <li>{`Deaths: ${character.deaths}`}</li>
-                
-                
-                {/* {typeof(character.title) !== "undefined" && ( <li>{`Title: ${character.title}`}</li> )} */}
             </ul>
         </div>
+    )
+}
+
+// Render a single crafting discipline
+const CraftingDiscipline = ({ craft }) => {
+    return (
+        <span className="character-discipline" data-active={craft.active}>
+            <GW2Icon iconId={`map_crafting_${craft.discipline.toLowerCase()}`} />
+            <span>{` ${craft.discipline} (${craft.rating})`}</span>
+        </span>
     )
 }
 

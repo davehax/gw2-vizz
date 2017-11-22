@@ -14,6 +14,8 @@ class Account extends Component {
         if (this.props.account.access.indexOf("HeartOfThorns") > -1) access += ", Heart of Thorns";
         if (this.props.account.access.indexOf("PathOfFire") > -1) access += ", Path of Fire";
 
+        let guilds = this.props.account.guilds.map((guild) => guild.name).join(", ");
+
         return (
             <div className="account-details">
                 <h1 className="account-title">{this.props.account.name}</h1>
@@ -27,7 +29,8 @@ class Account extends Component {
                     <li><span>Fractal Level:</span>{this.props.account.fractal_level}</li>
                     <li><span>WvW Rank:</span>{this.props.account.wvw_rank}</li>
                     <li><span>Access:</span>{access}</li>
-                    <li><span>Guilds:</span>{this.props.account.guilds.map((guild, idx) => <span key={idx}>{guild}</span>)}</li>
+                    {/* <li><span>Guilds:</span>{this.props.account.guilds.map((guild, idx) => <span key={idx}>{guild.name}</span>)}</li> */}
+                    <li><span>Guilds:</span>{guilds}</li>
                 </ul>
             </div>
         )
